@@ -10,12 +10,7 @@
 #include <assert.h>
 #include <string.h>
 #include <linux/i2c.h>
-
-/* This is the structure as used in the I2C_RDWR ioctl call */
-struct i2c_rdwr_ioctl_data {
-        struct i2c_msg __user *msgs;  /* pointers to i2c_msgs */
-        __u32 nmsgs;                  /* number of i2c_msgs */
-};
+#include <linux/i2c-dev.h>
 
 int i2c_read_reg(char *dev, unsigned char *buf, unsigned slave_address, unsigned reg_address, int len)
 {
@@ -132,7 +127,7 @@ int main(int argc, char **argv)
     }
 
     sscanf(argv[2], "%x", &slave_address);
-    sscanf(argv[3], "%x", ®_address);
+    sscanf(argv[3], "%x", &reg_address);
     sscanf(argv[4], "%d", &r_w);
 
     if (r_w == 0) {
