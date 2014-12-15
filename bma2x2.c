@@ -80,7 +80,62 @@
 #include "bma2x2.h"
 /* user defined code to be added here ... */
 bma2x2_t * p_bma2x2;
-unsigned char V_BMA2x2RESOLUTION_U8R = BMA2x2_14_RESOLUTION; /* Based on Bit resolution value should be modified */
+unsigned char V_BMA2x2RESOLUTION_U8R = BMA2x2_12_RESOLUTION; /* Based on Bit resolution value should be modified */
+#ifdef W2_USERSPACE
+
+#include <i2c-util.h>
+#include <linux/types.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+char i2c_write(unsigned char device_addr, unsigned char register_addr, unsigned char * data, unsigned char length)
+{
+    int ret = -1;
+    ret = i2c_write_reg("/dev/i2c-2", data, (unsigned)device_addr, (unsigned)register_addr, (int)length);
+    if (ret!=0) {
+        return ret;
+    }
+    return 0;
+}
+
+char i2c_read(unsigned char device_addr, unsigned char register_addr, unsigned char * data, unsigned char length)
+{
+    int ret = -1, i=0;
+    unsigned char dum;
+    device_addr = device_addr&0xFE;
+    for(i=0;i<length;i++) {
+        printf(" \b");
+        ret = i2c_read_reg("/dev/i2c-2", &dum, (unsigned)device_addr, (unsigned)(register_addr + i), 1);
+        *(data + i) = dum;
+        //usleep((useconds_t)(1000000));
+    }
+    if (ret!=0) {
+        return ret;
+    }
+    return 0;
+}
+
+char i2c_burst_read(unsigned char device_addr, unsigned char register_addr, unsigned char * data,unsigned int length)
+{
+    //TODO: cannot go bigger than 255
+    int ret = -1;
+    ret = i2c_read(device_addr, register_addr, data, (unsigned int)length);
+    if (ret!=0) {
+        return ret;
+    }
+    return 0;
+}
+
+void delay_ms(BMA2x2_MDELAY_DATA_TYPE n)
+{
+    int t = n;
+    usleep((useconds_t)(t*1000));
+}
+
+
+#endif //W2_USERSPACE
 /* Compiler Switch if applicable
 #ifdef
 
@@ -155,6 +210,12 @@ int bma2x2_init(bma2x2_t *bma2x2)
 
    p_bma2x2 = bma2x2;                                                                             /* assign bma2x2 ptr */
    p_bma2x2->dev_addr = BMA2x2_I2C_ADDR;                                                          /* preset bma2x2 I2C_addr */
+
+   p_bma2x2->bus_write = &i2c_write;
+   p_bma2x2->bus_read = &i2c_read;
+   p_bma2x2->burst_read = &i2c_burst_read;
+   p_bma2x2->delay_msec = &delay_ms;
+
    comres = p_bma2x2->BMA2x2_BUS_READ_FUNC(p_bma2x2->dev_addr, BMA2x2_CHIP_ID__REG, &data, 1);     /* read Chip Id */
    p_bma2x2->chip_id = data ;                                          /* get bitslice */
    return comres;

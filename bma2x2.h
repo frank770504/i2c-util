@@ -83,6 +83,18 @@
 
 //Example....
 //#define YOUR_H_DEFINE  /**< <Doxy Comment for YOUR_H_DEFINE> */
+#define W2_USERSPACE 1
+
+#ifdef W2_USERSPACE
+
+#include <i2c-util.h>
+
+//char i2c_write(unsigned char device_addr, unsigned char register_addr, unsigned char * data, unsigned char length);
+
+//char i2c_read(unsigned char device_addr, unsigned char register_addr, unsigned char * data, unsigned char length);
+
+#endif //W2_USERSPACE
+
 /** Define the calling convention of YOUR bus communication routine.
         \note This includes types of parameters. This example shows the configuration for an SPI bus link.
 
